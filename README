@@ -1,0 +1,10 @@
+A program that generates its own source code and Makefile
+
+Uses ld to generate obj files from the source code and makefile files, and
+embeds the objects in the built executable. Embedded data sections are
+demarcated with symbols.
+Runing the program creates a new directory and writes the embedded data back to
+new corresponding files.
+
+dev note:
+objdumb -t main_c.o     #Inspect symbols in object file
