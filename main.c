@@ -4,26 +4,40 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
+//Self-referential source
 extern const char _binary_main_c_start;
 extern const char _binary_main_c_end;
 extern const char _binary_Makefile_start;
 extern const char _binary_Makefile_end;
 
+//C templates
+extern const char _binary_templates_c_main_c_start;
+extern const char _binary_templates_c_main_c_end;
+extern const char _binary_templates_c_Makefile_start;
+extern const char _binary_templates_c_Makefile_end;
+
 bool new_dir(const char path[]);
 bool write_new_file(const char path[], const char* data, size_t data_size);
+bool write_c_project();
+bool write_argo_project();
 
 int main(int argc, char* argv[])
 {
     const char* dir = "argo";
-    if(argc > 1) dir = argv[1];
+    bool (*write_project)() = write_argo_project;
+    if(argc > 1)
+    {
+        dir = argv[1];
+        if(strcmp(dir, "argo")) write_project = write_c_project;
+    }
     //TODO: Print use help
 
-    if(!new_dir(dir))
-    {
-        return EXIT_FAILURE;
-    }
+    //Create new project directory
+    if(!new_dir(dir)) return EXIT_FAILURE;
 
+    //Important to change to new empty directory before writing files
     if(chdir(dir))
     {
         fprintf(stderr, "error: opening new project dir ./%s\n", dir);
@@ -31,14 +45,8 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    if(!write_new_file("main.c", &_binary_main_c_start, &_binary_main_c_end - &_binary_main_c_start))
-    {
-        return EXIT_FAILURE;
-    }
-    if(!write_new_file("Makefile", &_binary_Makefile_start, &_binary_Makefile_end - &_binary_Makefile_start))
-    {
-        return EXIT_FAILURE;
-    }
+    //Write files
+    if(!write_project()) return EXIT_FAILURE;
 
     printf("Created project ./%s\n", dir);
     return 0;
@@ -88,4 +96,23 @@ bool write_new_file(const char path[], const char* data, size_t data_size)
 
     fclose(file);
     return true;
+}
+
+bool write_c_project()
+{
+    return
+        write_new_file("main.c", &_binary_templates_c_main_c_start, &_binary_templates_c_main_c_end - &_binary_templates_c_main_c_start) &&
+        write_new_file("Makefile", &_binary_templates_c_Makefile_start, &_binary_templates_c_Makefile_end - &_binary_templates_c_Makefile_start);
+}
+
+bool write_argo_project()
+{
+    return
+        new_dir("templates") &&
+        new_dir("templates/c") &&
+        write_new_file("main.c", &_binary_main_c_start, &_binary_main_c_end - &_binary_main_c_start) &&
+        write_new_file("Makefile", &_binary_Makefile_start, &_binary_Makefile_end - &_binary_Makefile_start) &&
+        write_new_file("templates/c/main.c", &_binary_templates_c_main_c_start, &_binary_templates_c_main_c_end - &_binary_templates_c_main_c_start) &&
+        write_new_file("templates/c/Makefile", &_binary_templates_c_Makefile_start, &_binary_templates_c_Makefile_end - &_binary_templates_c_Makefile_start);
+
 }
