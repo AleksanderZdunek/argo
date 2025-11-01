@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 extern const char _binary_main_c_start;
 extern const char _binary_main_c_end;
@@ -14,22 +15,32 @@ bool write_new_file(const char path[], const char* data, size_t data_size);
 
 int main(int argc, char* argv[])
 {
-    const char dir[] = "./argo";
+    const char* dir = "argo";
+    if(argc > 1) dir = argv[1];
+    //TODO: Print use help
+
     if(!new_dir(dir))
     {
         return EXIT_FAILURE;
     }
 
-    if(!write_new_file("./argo/main.c", &_binary_main_c_start, &_binary_main_c_end - &_binary_main_c_start))
+    if(chdir(dir))
+    {
+        fprintf(stderr, "error: opening new project dir ./%s\n", dir);
+        fprintf(stderr, "errno: %d; ", errno); perror("chdir()");
+        return EXIT_FAILURE;
+    }
+
+    if(!write_new_file("main.c", &_binary_main_c_start, &_binary_main_c_end - &_binary_main_c_start))
     {
         return EXIT_FAILURE;
     }
-    if(!write_new_file("./argo/Makefile", &_binary_Makefile_start, &_binary_Makefile_end - &_binary_Makefile_start))
+    if(!write_new_file("Makefile", &_binary_Makefile_start, &_binary_Makefile_end - &_binary_Makefile_start))
     {
         return EXIT_FAILURE;
     }
 
-    printf("Created project %s\n", dir);
+    printf("Created project ./%s\n", dir);
     return 0;
 }
 
