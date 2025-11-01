@@ -1,4 +1,4 @@
-TARGET = run
+TARGET = argo
 OBJ = 	main.o\
 		main_c.o\
 		makefile.o
