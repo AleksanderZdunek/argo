@@ -3,7 +3,9 @@ OBJ = 	main.o\
 		main_c.o\
 		makefile.o\
 		c.o\
-		makefile_c.o
+		makefile_c.o\
+		cpp.o\
+		makefile_cpp.o
 
 CC = gcc
 CFLAGS = -std=c11 -O3 -Wall -Wpedantic
@@ -20,6 +22,12 @@ c.o: templates/c/main.c
 	ld -r -b binary $< -o $@
 
 makefile_c.o: templates/c/Makefile
+	ld -r -b binary $< -o $@
+
+cpp.o: templates/cpp/main.cpp
+	ld -r -b binary $< -o $@
+
+makefile_cpp.o: templates/cpp/Makefile
 	ld -r -b binary $< -o $@
 
 $(TARGET): $(OBJ)
