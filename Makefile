@@ -8,12 +8,13 @@ OBJ = 	main.o\
 		makefile_cpp.o
 
 CC = gcc
-CFLAGS = -std=c11 -O3 -Wall -Wpedantic -DBUILD_DATE=$(BUILD_DATE)
-BUILD_DATE = \"$(shell date +%Y%m%d:%H%m)\"
+CFLAGS = -std=c11 -O3 -Wall -Wpedantic
+BUILD_DATE = \"$(shell date +%Y%m%d:%H%M)\"
 
 all: $(TARGET)
 
 main.o: main.c Makefile
+	$(CC) $(CFLAGS) -DBUILD_DATE=$(BUILD_DATE) -c -o $@ $<
 
 main_c.o: main.c
 	ld -r -b binary $< -o $@
