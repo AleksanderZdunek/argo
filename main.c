@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
 
 //Self-referential source
 extern const char _binary_main_c_start;
@@ -30,30 +31,132 @@ bool write_c_project();
 bool write_argo_project();
 bool write_cpp_project();
 void print_help();
+void print_version();
+enum language
+{
+    C,
+    CPLUSPLUS,
+};
+struct args
+{
+    const char* dir;
+    enum language lang;
+    bool help;
+    bool version;
+    bool well_formed;
+};
+struct args parse_args(const int argc, const char* const argv[]);
+struct args parse_args(const int argc, const char* const argv[])
+{
+    struct args args = {0};
+    enum {
+        LANG,
+        DIR,
+    };
+    int pos = LANG; //positional argument
+    for(int i = 1; i < argc; ++i)
+    {
+        if(!strcmp("--help", argv[i]))
+        {
+            args.help = true;
+            args.well_formed = (argc == 2);
+            return args;
+        }
+        else if(!strcmp("--version", argv[i]))
+        {
+            args.version = true;
+            args.well_formed = (argc == 2);
+            return args;
+        }
+        else if(LANG == pos)
+        {
+            if(!strcmp("C", argv[i]) || !strcmp("c", argv[i]))
+            {
+                args.lang = C;
+            }
+            else if(!strcmp("C++", argv[i]) || !strcmp("c++", argv[i]))
+            {
+                args.lang = CPLUSPLUS;
+            }
+            else
+            {
+                args.well_formed = false;
+                return args;
+            }
+            ++pos;
+        }
+        else if(DIR == pos)
+        {
+            args.dir = argv[i];
+            ++pos;
+        }
+        else
+        {
+            args.well_formed = false;
+            return args;
+        }
+    }
+    args.well_formed = true;
+    return args;
+}
 
 int main(int argc, char* argv[])
 {
     const char* dir = "argo";
     bool (*write_project)() = write_argo_project;
-    if(argc > 2) {
-        char* lang = argv[1];
-        dir = argv[2];
-        if(!strcmp("C", lang) || !strcmp("c", lang))
-        {
-            if(strcmp(dir, "argo")) write_project = write_c_project;
-        } else if(!strcmp("C++", lang) || !strcmp("c++", lang))
-        {
-            write_project = write_cpp_project;
-        } else
-        {
-            print_help();
-            return EXIT_FAILURE;
-        }
-    } else
+
+    struct args args = parse_args(argc, (char const * const *)argv);
+    if(!args.well_formed)
     {
+        printf("error: bad argument syntax\n");
         print_help();
         return EXIT_FAILURE;
     }
+    else if(args.help)
+    {
+        print_help();
+        return EXIT_SUCCESS;
+    }
+    else if(args.version)
+    {
+        print_version();
+        return EXIT_SUCCESS;
+    }
+    else
+    {
+        dir = args.dir;
+        switch(args.lang)
+        {
+            case C:
+                if(strcmp("argo", dir)) write_project = write_c_project;
+                break;
+            case CPLUSPLUS:
+                write_project = write_cpp_project;
+                break;
+            default:
+                assert(false);
+        }
+    }
+
+    // if(argc > 2) {
+    //     char* lang = argv[1];
+    //     dir = argv[2];
+    //     if(!strcmp("C", lang) || !strcmp("c", lang))
+    //     {
+    //         if(strcmp(dir, "argo")) write_project = write_c_project;
+    //     } else if(!strcmp("C++", lang) || !strcmp("c++", lang))
+    //     {
+    //         write_project = write_cpp_project;
+    //     } else
+    //     {
+    //         print_help();
+    //         return EXIT_FAILURE;
+    //     }
+    // } else
+    // {
+    //     print_help();
+    //     return EXIT_FAILURE;
+    // }
 
     //Create new project directory
     if(!new_dir(dir)) return EXIT_FAILURE;
@@ -150,13 +253,24 @@ bool write_cpp_project()
 
 void print_help()
 {
+    //TODO: add --version, --help documentation
     printf(
         "Utility for creating a new C/C++ project starting point.\n"
-        "Usage: argo <language> <name>\n"
+        "Usage: argo [option] <language> <name>\n"
         "\n"
         "<language>:\n"
         "   C, c   Create a new C project\n"
         "   C++, c++    Create a new C++ project\n"
         "<name> the new project. Creates a new directory with the project name.\n"
     );
+}
+
+void print_version()
+{
+    #ifdef BUILD_DATE
+    printf("Build date: " BUILD_DATE "\n");
+    #else
+    #pragma GCC warning "BUILD_DATE macro not defined. Falling back on default build date string formatting."
+    printf("Build date: "__DATE__" "__TIME__"\n");
+    #endif
 }
