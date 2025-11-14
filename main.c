@@ -46,54 +46,6 @@ struct args
     bool ok;
 };
 struct args parse_args(const int argc, const char* const argv[]);
-struct args parse_args(const int argc, const char* const argv[])
-{
-    struct args args = {.ok = true};
-    enum {
-        LANG,
-        DIR,
-    };
-    int pos = LANG; //positional argument
-    for(int i = 1; i < argc; ++i)
-    {
-        if(!strcmp("--help", argv[i]))
-        {
-            args.help = true;
-        }
-        else if(!strcmp("--version", argv[i]))
-        {
-            args.version = true;
-        }
-        else if(LANG == pos)
-        {
-            if(!strcmp("C", argv[i]) || !strcmp("c", argv[i]))
-            {
-                args.lang = C;
-            }
-            else if(!strcmp("C++", argv[i]) || !strcmp("c++", argv[i]))
-            {
-                args.lang = CPLUSPLUS;
-            }
-            else
-            {
-                args.ok = false;
-            }
-            ++pos;
-        }
-        else if(DIR == pos)
-        {
-            args.dir = argv[i];
-            ++pos;
-        }
-        else
-        {
-            args.ok = false;
-            return args;
-        }
-    }
-    args.ok = args.ok && (pos > DIR);
-    return args;
-}
 
 int main(int argc, char* argv[])
 {
@@ -131,26 +83,6 @@ int main(int argc, char* argv[])
                 assert(false);
         }
     }
-
-    // if(argc > 2) {
-    //     char* lang = argv[1];
-    //     dir = argv[2];
-    //     if(!strcmp("C", lang) || !strcmp("c", lang))
-    //     {
-    //         if(strcmp(dir, "argo")) write_project = write_c_project;
-    //     } else if(!strcmp("C++", lang) || !strcmp("c++", lang))
-    //     {
-    //         write_project = write_cpp_project;
-    //     } else
-    //     {
-    //         print_help();
-    //         return EXIT_FAILURE;
-    //     }
-    // } else
-    // {
-    //     print_help();
-    //     return EXIT_FAILURE;
-    // }
 
     //Create new project directory
     if(!new_dir(dir)) return EXIT_FAILURE;
@@ -267,4 +199,53 @@ void print_version()
     #pragma GCC warning "BUILD_DATE macro not defined. Falling back on default build date string formatting."
     printf("Build date: "__DATE__" "__TIME__"\n");
     #endif
+}
+
+struct args parse_args(const int argc, const char* const argv[])
+{
+    struct args args = {.ok = true};
+    enum {
+        LANG,
+        DIR,
+    };
+    int pos = LANG; //positional argument
+    for(int i = 1; i < argc; ++i)
+    {
+        if(!strcmp("--help", argv[i]))
+        {
+            args.help = true;
+        }
+        else if(!strcmp("--version", argv[i]))
+        {
+            args.version = true;
+        }
+        else if(LANG == pos)
+        {
+            if(!strcmp("C", argv[i]) || !strcmp("c", argv[i]))
+            {
+                args.lang = C;
+            }
+            else if(!strcmp("C++", argv[i]) || !strcmp("c++", argv[i]))
+            {
+                args.lang = CPLUSPLUS;
+            }
+            else
+            {
+                args.ok = false;
+            }
+            ++pos;
+        }
+        else if(DIR == pos)
+        {
+            args.dir = argv[i];
+            ++pos;
+        }
+        else
+        {
+            args.ok = false;
+            return args;
+        }
+    }
+    args.ok = args.ok && (pos > DIR);
+    return args;
 }
