@@ -16,6 +16,8 @@ all: $(TARGET)
 main.o: main.c Makefile
 	$(CC) $(CFLAGS) -DBUILD_DATE=$(BUILD_DATE) -c -o $@ $<
 
+#TODO: Can "Canned Recipes" help clean up this mess?
+#https://www.gnu.org/software/make/manual/make.html#Canned-Recipes
 main_c.o: main.c
 	ld -r -b binary $< -o $@
 
