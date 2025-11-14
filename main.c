@@ -43,12 +43,12 @@ struct args
     enum language lang;
     bool help;
     bool version;
-    bool well_formed;
+    bool ok;
 };
 struct args parse_args(const int argc, const char* const argv[]);
 struct args parse_args(const int argc, const char* const argv[])
 {
-    struct args args = {0};
+    struct args args = {.ok = true};
     enum {
         LANG,
         DIR,
@@ -59,14 +59,10 @@ struct args parse_args(const int argc, const char* const argv[])
         if(!strcmp("--help", argv[i]))
         {
             args.help = true;
-            args.well_formed = (argc == 2);
-            return args;
         }
         else if(!strcmp("--version", argv[i]))
         {
             args.version = true;
-            args.well_formed = (argc == 2);
-            return args;
         }
         else if(LANG == pos)
         {
@@ -80,8 +76,7 @@ struct args parse_args(const int argc, const char* const argv[])
             }
             else
             {
-                args.well_formed = false;
-                return args;
+                args.ok = false;
             }
             ++pos;
         }
@@ -92,11 +87,11 @@ struct args parse_args(const int argc, const char* const argv[])
         }
         else
         {
-            args.well_formed = false;
+            args.ok = false;
             return args;
         }
     }
-    args.well_formed = true;
+    args.ok = args.ok && (pos > DIR);
     return args;
 }
 
@@ -106,21 +101,20 @@ int main(int argc, char* argv[])
     bool (*write_project)() = write_argo_project;
 
     struct args args = parse_args(argc, (char const * const *)argv);
-    if(!args.well_formed)
-    {
-        printf("error: bad argument syntax\n");
-        print_help();
-        return EXIT_FAILURE;
-    }
-    else if(args.help)
+    if(args.help)
     {
         print_help();
-        return EXIT_SUCCESS;
+        return 0;
     }
     else if(args.version)
     {
         print_version();
-        return EXIT_SUCCESS;
+        return 0;
+    }
+    else if(!args.ok)
+    {
+        print_help();
+        return EXIT_FAILURE;
     }
     else
     {
