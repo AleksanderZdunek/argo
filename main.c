@@ -179,7 +179,6 @@ bool write_cpp_project()
 
 void print_help()
 {
-    //TODO: add --version, --help documentation
     printf(
         "Utility for creating a new C/C++ project starting point.\n"
         "Usage: argo [option] <language> <name>\n"
@@ -188,6 +187,9 @@ void print_help()
         "   C, c   Create a new C project\n"
         "   C++, c++    Create a new C++ project\n"
         "<name> the new project. Creates a new directory with the project name.\n"
+        "[option]:\n"
+        "   --help      This help text\n"
+        "   --version   Build date\n"
     );
 }
 
