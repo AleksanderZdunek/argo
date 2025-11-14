@@ -30,12 +30,14 @@ bool write_new_file(const char path[], const char* data, size_t data_size);
 bool write_c_project();
 bool write_argo_project();
 bool write_cpp_project();
+bool write_header_file(const char* name);
 void print_help();
 void print_version();
 enum language
 {
     C,
     CPLUSPLUS,
+    HEADER,
 };
 struct args
 {
@@ -79,26 +81,36 @@ int main(int argc, char* argv[])
             case CPLUSPLUS:
                 write_project = write_cpp_project;
                 break;
+            case HEADER:
+                write_project = NULL;
+                break;
             default:
                 assert(false);
         }
     }
 
-    //Create new project directory
-    if(!new_dir(dir)) return EXIT_FAILURE;
-
-    //Important to change to new empty directory before writing files
-    if(chdir(dir))
+    if(write_project)
     {
-        fprintf(stderr, "error: opening new project dir ./%s\n", dir);
-        fprintf(stderr, "errno: %d; ", errno); perror("chdir()");
-        return EXIT_FAILURE;
+        //Create new project directory
+        if(!new_dir(dir)) return EXIT_FAILURE;
+
+        //Important to change to new empty directory before writing files
+        if(chdir(dir))
+        {
+            fprintf(stderr, "error: opening new project dir ./%s\n", dir);
+            fprintf(stderr, "errno: %d; ", errno); perror("chdir()");
+            return EXIT_FAILURE;
+        }
+
+        //Write files
+        if(!write_project()) return EXIT_FAILURE;
+
+        printf("Created project ./%s\n", dir);
     }
-
-    //Write files
-    if(!write_project()) return EXIT_FAILURE;
-
-    printf("Created project ./%s\n", dir);
+    else //Write new header file
+    {
+        write_header_file(dir);
+    }
     return 0;
 }
 
@@ -177,8 +189,17 @@ bool write_cpp_project()
         write_new_file("Makefile", &_binary_templates_cpp_Makefile_start, &_binary_templates_cpp_Makefile_end - &_binary_templates_cpp_Makefile_start);
 }
 
+bool write_header_file(const char* name)
+{
+    //TODO: implement me
+    //TODO: write_new_file() needs to check to not overwrite existing file now
+    printf("TODO: implement me %s(): filename: %s\n", __func__, name);
+    return true;
+}
+
 void print_help()
 {
+    //TODO: document header "<language>"
     printf(
         "Utility for creating a new C/C++ project starting point.\n"
         "Usage: argo [option] <language> <name>\n"
@@ -230,6 +251,10 @@ struct args parse_args(const int argc, const char* const argv[])
             else if(!strcmp("C++", argv[i]) || !strcmp("c++", argv[i]))
             {
                 args.lang = CPLUSPLUS;
+            }
+            else if(!strcmp("header", argv[i]))
+            {
+                args.lang = HEADER;
             }
             else
             {
