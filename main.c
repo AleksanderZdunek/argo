@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
+#include <ctype.h>
 
 //Self-referential source
 extern const char _binary_main_c_start;
@@ -189,11 +190,39 @@ bool write_cpp_project()
         write_new_file("Makefile", &_binary_templates_cpp_Makefile_start, &_binary_templates_cpp_Makefile_end - &_binary_templates_cpp_Makefile_start);
 }
 
+/* Mangle a character for use in header file include guard
+Alphabetic character to upper case and non-alphanumeric to '_'
+*/
+char include_guard_character(char c)
+{
+    if(isalnum(c)) return toupper(c);
+    return '_';
+}
+
 bool write_header_file(const char* name)
 {
-    //TODO: implement me
-    //TODO: write_new_file() needs to check to not overwrite existing file now
-    printf("TODO: implement me %s(): filename: %s\n", __func__, name);
+    const char* fmt = "%s";
+    if(isdigit(name[0])) fmt = "_%s";
+    char guard_id_buf[1 + snprintf(NULL, 0, fmt, name)];
+    int written = snprintf(guard_id_buf, sizeof guard_id_buf, fmt, name);
+    assert(written + 1 == sizeof guard_id_buf);
+    assert('\0' == guard_id_buf[written]);
+    //Mangle guard id
+    for(char* p = guard_id_buf; *p; ++p)
+    {
+        *p = isalnum(*p) ? toupper(*p) : '_';
+    }
+
+    int res = fprintf(stdout,
+        "#ifndef %s\n"
+        "#define %s\n"
+        "\n"
+        "#endif //%s\n",
+        guard_id_buf, guard_id_buf, guard_id_buf
+    );
+    //TODO: Write to file instead of stdout. fopen(<filename>, "wx");
+    //TODO: Add .h suffix to filename if missing.
+    //TODO: Error handling for fprintf
     return true;
 }
 
