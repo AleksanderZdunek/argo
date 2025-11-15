@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <ctype.h>
 
+#define PRINT_ERRNO() fprintf(stderr, "errno: %d: %s\n", errno, strerror(errno));
+
 //Self-referential source
 extern const char _binary_main_c_start;
 extern const char _binary_main_c_end;
@@ -110,7 +112,7 @@ int main(int argc, char* argv[])
     }
     else //Write new header file
     {
-        write_header_file(dir);
+        if(!write_header_file(dir)) return EXIT_FAILURE;
     }
     return 0;
 }
@@ -190,53 +192,69 @@ bool write_cpp_project()
         write_new_file("Makefile", &_binary_templates_cpp_Makefile_start, &_binary_templates_cpp_Makefile_end - &_binary_templates_cpp_Makefile_start);
 }
 
-/* Mangle a character for use in header file include guard
-Alphabetic character to upper case and non-alphanumeric to '_'
-*/
-char include_guard_character(char c)
-{
-    if(isalnum(c)) return toupper(c);
-    return '_';
-}
-
 bool write_header_file(const char* name)
 {
-    const char* fmt = "%s";
-    if(isdigit(name[0])) fmt = "_%s";
-    char guard_id_buf[1 + snprintf(NULL, 0, fmt, name)];
-    int written = snprintf(guard_id_buf, sizeof guard_id_buf, fmt, name);
-    assert(written + 1 == sizeof guard_id_buf);
-    assert('\0' == guard_id_buf[written]);
+    size_t len = strlen(name);
+
+    //Append .h to filename if missing
+    char filename[len + 3];
+    strcpy(filename, name);
+    if(strcmp(filename + len - 2, ".h"))
+    {
+        strcat(filename, ".h");
+        len += 2;
+    }
+
+    //Create include guard id from filename
+    //Prefix with _ if filename starts with a digit
+    char guard_id[len + 2];
+    guard_id[0] = '_';
+    strcpy(guard_id  + (isdigit(filename[0]) ? 1 : 0), filename);
     //Mangle guard id
-    for(char* p = guard_id_buf; *p; ++p)
+    for(char* p = guard_id; *p; ++p)
     {
         *p = isalnum(*p) ? toupper(*p) : '_';
     }
 
-    int res = fprintf(stdout,
+    FILE* file = fopen(filename, "wx");
+    if(!file)
+    {
+        fprintf(stderr, "error: opening file %s\n", filename);
+        PRINT_ERRNO();
+        return false;
+    }
+
+    //Raison d'être
+    if(1 > fprintf(file,
         "#ifndef %s\n"
         "#define %s\n"
         "\n"
         "#endif //%s\n",
-        guard_id_buf, guard_id_buf, guard_id_buf
-    );
-    //TODO: Write to file instead of stdout. fopen(<filename>, "wx");
-    //TODO: Add .h suffix to filename if missing.
-    //TODO: Error handling for fprintf
+        guard_id, guard_id, guard_id
+    ))
+    {
+        fprintf(stderr, "error: writing file %s\n", name);
+        PRINT_ERRNO();
+        fclose(file);
+        return false;
+    }
+
+    fclose(file);
+    printf("Created file %s\n", filename);
     return true;
 }
 
 void print_help()
 {
-    //TODO: document header "<language>"
     printf(
         "Utility for creating a new C/C++ project starting point.\n"
         "Usage: argo [option] <language> <name>\n"
         "\n"
         "<language>:\n"
-        "   C, c   Create a new C project\n"
+        "   C, c        Create a new C project\n"
         "   C++, c++    Create a new C++ project\n"
-        "<name> the new project. Creates a new directory with the project name.\n"
+        "   header      Create a new C/C++ header file\n"
+        "<name>         Name of new project directory or file.\n"
         "[option]:\n"
         "   --help      This help text\n"
         "   --version   Build date\n"
