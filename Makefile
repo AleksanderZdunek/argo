@@ -11,34 +11,27 @@ CC = gcc
 CFLAGS = -std=c11 -O3 -Wall -Wpedantic
 BUILD_DATE = \"$(shell date +%Y%m%d:%H%M)\"
 
+.PHONY: clean all
+
 all: $(TARGET)
 
 main.o: main.c Makefile
 	$(CC) $(CFLAGS) -DBUILD_DATE=$(BUILD_DATE) -c -o $@ $<
 
-#TODO: Can "Canned Recipes" help clean up this mess?
-#https://www.gnu.org/software/make/manual/make.html#Canned-Recipes
 main_c.o: main.c
-	ld -r -b binary $< -o $@
-
 makefile.o: Makefile
-	ld -r -b binary $< -o $@
-
 c.o: boilerplate/c/main.c
-	ld -r -b binary $< -o $@
-
 makefile_c.o: boilerplate/c/Makefile
-	ld -r -b binary $< -o $@
-
 cpp.o: boilerplate/cpp/main.cpp
+makefile_cpp.o: boilerplate/cpp/Makefile
+%.o:
 	ld -r -b binary $< -o $@
 
-makefile_cpp.o: boilerplate/cpp/Makefile
-	ld -r -b binary $< -o $@
+%:
+	$(error No rule to make target '$@')
 
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
-.PHONY: clean
 clean:
 	rm -f $(OBJ) $(TARGET)
