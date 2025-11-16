@@ -24,16 +24,16 @@ main_c.o: main.c
 makefile.o: Makefile
 	ld -r -b binary $< -o $@
 
-c.o: templates/c/main.c
+c.o: boilerplate/c/main.c
 	ld -r -b binary $< -o $@
 
-makefile_c.o: templates/c/Makefile
+makefile_c.o: boilerplate/c/Makefile
 	ld -r -b binary $< -o $@
 
-cpp.o: templates/cpp/main.cpp
+cpp.o: boilerplate/cpp/main.cpp
 	ld -r -b binary $< -o $@
 
-makefile_cpp.o: templates/cpp/Makefile
+makefile_cpp.o: boilerplate/cpp/Makefile
 	ld -r -b binary $< -o $@
 
 $(TARGET): $(OBJ)
