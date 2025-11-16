@@ -253,7 +253,7 @@ void print_help()
         "<language>:\n"
         "   C, c        Create a new C project\n"
         "   C++, c++    Create a new C++ project\n"
-        "   header      Create a new C/C++ header file\n"
+        "   header, h   Create a new C/C++ header file\n"
         "<name>         Name of new project directory or file.\n"
         "[option]:\n"
         "   --help      This help text\n"
@@ -299,7 +299,7 @@ struct args parse_args(const int argc, const char* const argv[])
             {
                 args.lang = CPLUSPLUS;
             }
-            else if(!strcmp("header", argv[i]))
+            else if(!strcmp("header", argv[i]) || !strcmp("h", argv[i]))
             {
                 args.lang = HEADER;
             }
